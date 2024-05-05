@@ -22,19 +22,21 @@ const encrypt = (password) => {
   const iv = randomBytes(16)
   const key = randomBytes(32)
   const cipher = createCipheriv('aes-256-gcm', key ,iv)
-  const encrypted = cipher.update(password.toString() , 'utf8', 'base64') + cipher.final('base64')
+  const encrypted = cipher.update(password.toString() , 'utf8', 'base64url') + cipher.final('base64url')
   const tag = cipher.getAuthTag()
-  
-  return encrypted + ' ' + [key, iv, tag].map(secret => secret.toString('base64')).join('%%')
+  const secrets = [key, iv, tag].map(secret => secret.toString('base64url'))
+
+  return `\nCOPY THIS:\n${[encrypted, ...secrets].join('%%')}`
 }
 
-const decrypt = (cipher, secrets) => {
-  const [key, iv, tag] = secrets.split('%%').map(secret => Buffer.from(secret, 'base64'))
+const decrypt = (secrets) => {
+  const [cipher, key, iv, tag] = secrets.split('%%').map((secret, i) => i ? Buffer.from(secret, 'base64url') : secret)
   const decipher = createDecipheriv('aes-256-gcm', key, iv)
   decipher.setAuthTag(tag)
-  return decipher.update(cipher, 'base64', 'utf8') + decipher.final('utf8')
+
+  return '\nSECRET:\n' + decipher.update(cipher, 'base64url', 'utf8') + decipher.final('utf8')
 }
 
 enc && log(encrypt(enc))
-dec && _ && log(decrypt(dec, _[0]))
+dec && log(decrypt(dec))
 fuzz && loop(fuzz)
