@@ -4,7 +4,7 @@ import { readFileSync } from 'fs'
 import minimist from 'minimist'
 import { argv } from 'process'
 
-const { fuzz, decr, encr, _ } = minimist(argv.slice(2))
+const { fuzz, dec, enc, _ } = minimist(argv.slice(2))
 // --key=value
 const loop = async (url) => {
   const words = readFileSync('./small.txt', { encoding: 'utf-8' })
@@ -26,16 +26,16 @@ const encrypt = (password) => {
   const encrypted = cipher.update(password.toString() , 'utf8', 'base64') + cipher.final('base64')
   const tag = cipher.getAuthTag()
   
-  return encrypted + ' ' + [key, iv, tag].map(secret => secret.toString('base64')).join(' ')
+  return encrypted + ' ' + [key, iv, tag].map(secret => secret.toString('base64')).join('%%')
 }
 
 const decrypt = (cipher, secrets) => {
-  const [key, iv, tag] = secrets.map(secret => Buffer.from(secret, 'base64'))
+  const [key, iv, tag] = secrets.split('%%').map(secret => Buffer.from(secret, 'base64'))
   const decipher = createDecipheriv('aes-256-gcm', key, iv)
   decipher.setAuthTag(tag)
   return decipher.update(cipher, 'base64', 'utf8') + decipher.final('utf8')
 }
 
-encr && log(encrypt(encr))
-decr && _ && log(decrypt(decr, _).toString('utf-8'))
+enc && log(encrypt(enc))
+dec && _ && log(decrypt(dec, _[0]))
 fuzz && loop(fuzz)
