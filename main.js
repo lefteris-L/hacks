@@ -9,7 +9,7 @@ const { fuzz, dec, enc, _ } = minimist(argv.slice(2))
 const loop = async (url) => {
   const words = readFileSync('./small.txt', { encoding: 'utf-8' })
 
-  for (const word of words.split('\n').slice(100, 110)) {
+  for (const word of words.split('\n').slice(100, 110)/* slice is to make it faster for testing*/) {
     const res = await fetch(`${url}/${word}`)
     if (res.status < 300) {
       log(res.status)
@@ -17,7 +17,6 @@ const loop = async (url) => {
     }
   }
 }
-
 
 const encrypt = (password) => {
   const iv = randomBytes(16)
